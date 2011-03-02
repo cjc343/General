@@ -9,7 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
 import net.minecraft.server.WorldServer;
-import org.bukkit.World;
+//import org.bukkit.World;
 import org.bukkit.event.Event.Type;
 import org.bukkit.event.player.PlayerChatEvent;
 import org.bukkit.event.player.PlayerEvent;
@@ -17,7 +17,7 @@ import org.bukkit.event.player.PlayerListener;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.PluginCommandYamlParser;
-import org.bukkit.craftbukkit.CraftWorld;
+//import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -65,6 +65,11 @@ public class iListen extends PlayerListener {
 	public static General plugin;
 	public WorldServer server;
 
+	//common strings
+	final String sl = "/";
+	final String pBase = "general.";
+	final String corUse = "&cCorrect usage is: ";
+	final String incUse = "&cIncorrect usage of ";
 	// all commands checked for by general.
 	private String[] cmdArray = { "afk", "away", "compass", "getpos", "ghelp", "give", "help", "i", "item", "motd", "msg", "online", "playerlist", "reloaditems", "rlidb", "s", "setspawn", "spawn", "teleport", "tell", "time", "tp", "tphere", "who" };
 
@@ -93,7 +98,7 @@ public class iListen extends PlayerListener {
 	// 22 tphere
 	// 23 who
 
-	public static HashMap<Integer, String> cmds = new HashMap<Integer, String>();
+	public static HashMap<String, Boolean> cmds = new HashMap<String, Boolean>();
 
 	public iListen(General instance) {
 		plugin = instance;
@@ -102,21 +107,18 @@ public class iListen extends PlayerListener {
 	public void setupCmds() {
 		// input commands into hash table
 		for (String s : cmdArray) {
-			cmds.put(s.hashCode(), s);
+			cmds.put(s, true);
 		}
 
 		Plugin[] pArray = plugin.getServer().getPluginManager().getPlugins();
 		for (Plugin p : pArray) {
-			if (p != null && !p.getDescription().getName().equalsIgnoreCase("General")) {
+			if (p != null && !p.getDescription().getName().equalsIgnoreCase(General.name)) {
 				plugin.getServer().getPluginManager().enablePlugin(p);
 				if (p.getDescription().getCommands() != null) {
-					List<Command> cList = PluginCommandYamlParser.parse(p);
-					for (Command c : cList) {
-						if (cmds.containsKey(c.getName().hashCode())) {
-							if (cmds.get(c.getName().hashCode()).equals(c.getName())) {
-								System.out.println("General is giving " + c.getName() + " to " + p.getDescription().getName());
-								cmds.remove(c.getName().hashCode());
-							}
+					for (Command c : PluginCommandYamlParser.parse(p)) {
+						if (cmds.containsKey(c.getName())) {
+							System.out.println(General.name + " is giving " + c.getName() + " to " + p.getDescription().getName());
+							cmds.put(c.getName(), false);
 							// compare command to hashtable with commands
 							// General uses...
 							// command exists in general. Need to....
@@ -243,7 +245,7 @@ public class iListen extends PlayerListener {
 		ArrayList<String> motd = new ArrayList<String>();
 
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(plugin.getDataFolder() + File.separator + "general.motd"));
+			BufferedReader in = new BufferedReader(new FileReader(plugin.getDataFolder() + File.separator + pBase + "motd"));
 			String str;
 			while ((str = in.readLine()) != null) {
 				motd.add(str);
@@ -257,7 +259,7 @@ public class iListen extends PlayerListener {
 
 	public String[] read_commands() {
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(plugin.getDataFolder() + File.separator + "general.help"));
+			BufferedReader in = new BufferedReader(new FileReader(plugin.getDataFolder() + File.separator + pBase + "help"));
 			String str;
 			while ((str = in.readLine()) != null) {
 				if (!lines.contains(str)) {
@@ -335,23 +337,8 @@ public class iListen extends PlayerListener {
 			// General.log.info("Help command registry does not contain "+command_line+" to remove!");
 		}
 	}
-
-	private boolean doCmd(int i) {
-		if (cmds.containsKey(cmdArray[i].hashCode())) {
-			return true;
-		}
-		return false;
-	}
-
-	@Override
-	public void onPlayerJoin(PlayerEvent event) {
-
-		if (!doCmd(9)) {
-			return;
-		}
-
-		Player player = event.getPlayer();
-		final Player pp = player;
+	
+	private void sendMotd(Player player) {
 		String[] motd = readMotd();
 
 		if (motd == null || motd.length < 1) {
@@ -371,11 +358,12 @@ public class iListen extends PlayerListener {
 					Messaging.send(player, Messaging.argument(line, new String[] { "+dname,+d", "+name,+n", "+location,+l", "+health,+h", "+ip", "+balance", "+online" }, new String[] { player.getDisplayName(), player.getName(), location, Misc.string(player.getHealth()), ip, balance, Misc.string(plugin.getServer().getOnlinePlayers().length) }));
 				}
 			} else {
+				final Player pp = player;
 				plugin.getServer().getScheduler().scheduleAsyncDelayedTask(plugin, new Runnable() {
 					public void run() {
 						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							public void run() {
-								PlayerChatEvent newEvent = new PlayerChatEvent(Type.PLAYER_CHAT, pp, "/motd");
+								PlayerChatEvent newEvent = new PlayerChatEvent(Type.PLAYER_CHAT, pp, sl + cmdArray[9]);
 								onPlayerCommandPreprocess(newEvent);
 							}
 						});
@@ -386,6 +374,13 @@ public class iListen extends PlayerListener {
 			for (String line : motd) {
 				Messaging.send(player, Messaging.argument(line, new String[] { "+dname,+d", "+name,+n", "+location,+l", "+health,+h", "+ip", "+balance", "+online" }, new String[] { player.getDisplayName(), player.getName(), location, Misc.string(player.getHealth()), ip, balance, Misc.string(plugin.getServer().getOnlinePlayers().length) }));
 			}
+		}
+	}
+
+	@Override
+	public void onPlayerJoin(PlayerEvent event) {
+		if (cmds.get(cmdArray[9])) { // motd
+			sendMotd(event.getPlayer());
 		}
 	}
 
@@ -404,13 +399,13 @@ public class iListen extends PlayerListener {
 
 		String[] split = event.getMessage().split(" ");
 		Player player = event.getPlayer();
-		World world = player.getWorld();
-		server = ((CraftWorld) world).getHandle();
+		//World world = player.getWorld();
+		//server = ((CraftWorld) world).getHandle();
 		Messaging.save(player);
 		String base = split[0];
-
-		if ((!event.isCancelled()) && (Misc.isEither(base, "/help", "/?") && doCmd(6)) || (Misc.is(base, "/ghelp")) && doCmd(4)) {
-
+		////// help ////////////// help /////////// ? ////////// ? /////////// ghelp ///////////// ghelp //////////////
+		if ((!event.isCancelled()) && (Misc.isEither(base, sl + cmdArray[6], sl + "?") && cmds.get(cmdArray[6])) || (Misc.is(base, sl + cmdArray[4])) && cmds.get(cmdArray[4])) {
+			// 6: help 4: ghelp
 			int page = 0;
 
 			if (split.length >= 2) {
@@ -426,56 +421,42 @@ public class iListen extends PlayerListener {
 			print_commands(page);
 			event.setCancelled(true);
 		}
-
-		if ((!event.isCancelled()) && Misc.is(base, "/setspawn") && doCmd(16)) {
-			if (!General.Permissions.getHandler().permission(player, "general.spawn.set")) {
+		/////////////////// setspawn //////////////////////////////// setspawn
+		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[16]) && cmds.get(cmdArray[16])) {
+			//16: setspawn
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[17] + ".set")) {//general.spawn.set
 				return;
 			}
-			server.q.a((int) Math.ceil(player.getLocation().getX()), (int) Math.ceil(player.getLocation().getY()), (int) Math.ceil(player.getLocation().getZ()));
-
+			player.getWorld().setSpawnLocation(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ());
 			Messaging.send("&eSpawn position changed to where you are standing.");
 		}
-
-		if (Misc.isEither(base, "/rlidb", "/reloaditems") && doCmd(13)) {
-			if (!General.Permissions.getHandler().permission(player, "general.reloaditems")) {
+		/////////////////////// reloaditems ///////////////////////// reloaditems
+		if (Misc.isEither(base, sl+ "rlidb", sl+cmdArray[13]) && cmds.get(cmdArray[13])) {
+			//13: reloaditems
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[13])) {//general.reloaditems
 				return;
 			}
-
 			plugin.setupItems();
 			Messaging.send("&eItems.db reloaded.");
 		}
-
-		if (Misc.is(base, "/spawn") && doCmd(17)) {
-			if (!General.Permissions.getHandler().permission(player, "general.spawn")) {
+		/////////////////////////// spawn //////////////////////////// spawn //////////////
+		if (Misc.is(base, sl + cmdArray[17]) && cmds.get(cmdArray[17])) {
+			//17: spawn
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[17])) {//general.spawn
 				return;
 			}
 
 			player.teleportTo(spawn(player));
 		}
-
-		if ((!event.isCancelled()) && Misc.is(base, "/motd") && doCmd(9)) {
-			String[] motd = readMotd();
-
-			if (motd == null || motd.length < 1) {
-				return;
-			}
-
-			String location = (int) player.getLocation().getX() + "x, " + (int) player.getLocation().getY() + "y, " + (int) player.getLocation().getZ() + "z";
-			String ip = player.getAddress().getAddress().getHostAddress();
-			String balance = "";
-
-			Plugin test = plugin.getServer().getPluginManager().getPlugin("iConomy");
-			if (test != null) {
-				balance = iConomy.getBank().getAccount(player.getName()) + " " + iConomy.getBank().getCurrency();
-			}
-
-			for (String line : motd) {
-				Messaging.send(player, Messaging.argument(line, new String[] { "+dname,+d", "+name,+n", "+location,+l", "+health,+h", "+ip", "+balance", "+online" }, new String[] { player.getDisplayName(), player.getName(), location, Misc.string(player.getHealth()), ip, balance, Misc.string(plugin.getServer().getOnlinePlayers().length) }));
-			}
+		///////////////////// motd //////////////////////// motd //////////////////
+		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[9]) && cmds.get(cmdArray[9])) {
+			//9: motd
+			sendMotd(player);
 		}
-
-		if ((Misc.is(base, "/tp") && doCmd(21)) || (Misc.is(base, "/teleport") && doCmd(18))) {
-			if (!General.Permissions.getHandler().permission(player, "general.teleport")) {
+		///////////// tp /////////////// teleport ////////////// tp ///////////////// teleport //////////////
+		if ((Misc.is(base, sl+ cmdArray[21]) && cmds.get(cmdArray[21])) || (Misc.is(base, sl+ cmdArray[18]) && cmds.get(cmdArray[18]))) {
+			// 21: tp 18: teleport
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[18])) {//general.teleport
 				return;
 			}
 
@@ -483,9 +464,9 @@ public class iListen extends PlayerListener {
 				String to = split[1];
 
 				if (to.equalsIgnoreCase("*")) {
-					Messaging.send("&cIncorrect usage of wildchar *");
+					Messaging.send(incUse + "wildchar *");
 				} else if (to.contains(",")) {
-					Messaging.send("&cIncorrect usage of multiple players.");
+					Messaging.send(incUse + "multiple players.");
 				} else {
 					if (!teleport(player.getName(), to)) {
 						Messaging.send("&cCannot find destination player: &f" + to);
@@ -496,9 +477,9 @@ public class iListen extends PlayerListener {
 				String to = split[2];
 
 				if (to.equalsIgnoreCase("*")) {
-					Messaging.send("&cIncorrect usage of wildchar *");
+					Messaging.send(incUse + "wildchar *");
 				} else if (to.contains(",")) {
-					Messaging.send("&cIncorrect usage of multiple players.");
+					Messaging.send(incUse + "multiple players.");
 				} else {
 					if (!teleport(who, to)) {
 						Messaging.send("&cCould not teleport " + who + " to " + to + ".");
@@ -512,14 +493,15 @@ public class iListen extends PlayerListener {
 				Messaging.send("&c/tp * [to] &f-&c Teleport everyone to another player");
 			}
 		}
-
-		if ((Misc.is(base, "/s") && doCmd(15)) || (Misc.is(base, "/tphere") && doCmd(22))) {
-			if (!General.Permissions.getHandler().permission(player, "general.teleport.here")) {
+		////////// s /////////// tphere ////////////// s //////////////// tphere //////////////////
+		if ((Misc.is(base, sl + cmdArray[15]) && cmds.get(cmdArray[15])) || (Misc.is(base, sl + cmdArray[22]) && cmds.get(cmdArray[22]))) {
+			//15: s 22: tphere
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[18] + ".here")) {
 				return;
 			}
 
 			if (split.length < 2) {
-				Messaging.send("&cCorrect usage is:&f /s [player] &cor&f /tphere [player]");
+				Messaging.send(corUse + "&f" + sl + cmdArray[15] + " [player] &cor&f " + sl + cmdArray[22] + " [player]");
 				return;
 			}
 
@@ -537,8 +519,9 @@ public class iListen extends PlayerListener {
 				Messaging.send("&cCan't find user " + split[1] + ".");
 			}
 		}
-
-		if ((!event.isCancelled()) && Misc.is(base, "/getpos") && doCmd(3)) {
+		//////////////// getpos //////////////////////// getpos /////////////////////
+		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[3]) && cmds.get(cmdArray[3])) {
+			//3: getpos
 			Messaging.send("Pos X: " + player.getLocation().getX() + " Y: " + player.getLocation().getY() + " Z: " + player.getLocation().getZ());
 			Messaging.send("Rotation: " + player.getLocation().getYaw() + " Pitch: " + player.getLocation().getPitch());
 
@@ -550,8 +533,9 @@ public class iListen extends PlayerListener {
 
 			Messaging.send("Compass: " + getDirection(degreeRotation) + " (" + (Math.round(degreeRotation * 10) / 10.0) + ")");
 		}
-
-		if (Misc.is(base, "/compass") && doCmd(2)) {
+		////////////////// compass ////////////// compass ////////////
+		if (Misc.is(base, sl + cmdArray[2]) && cmds.get(cmdArray[2])) {
+			//2: compass
 			double degreeRotation = ((player.getLocation().getYaw() - 90) % 360);
 
 			if (degreeRotation < 0) {
@@ -560,8 +544,9 @@ public class iListen extends PlayerListener {
 
 			Messaging.send("&cCompass: " + getDirection(degreeRotation));
 		}
-
-		if ((Misc.is(base, "/afk") && doCmd(0)) || (Misc.is(base, "/away") && doCmd(1))) {
+		/////////////// afk ////////////// away ////////////// afk ///////////////// away ///////////////
+		if ((Misc.is(base, sl + cmdArray[0]) && cmds.get(cmdArray[0])) || (Misc.is(base, sl + cmdArray[1]) && cmds.get(cmdArray[1]))) {
+			//0: afk 1: away
 			if ((AFK != null || !AFK.isEmpty()) && isAFK(player)) {
 				Messaging.send("&7You have been marked as back.");
 				unAFK(player);
@@ -576,10 +561,11 @@ public class iListen extends PlayerListener {
 				AFK(player, reason);
 			}
 		}
-
-		if ((Misc.is(base, "/msg") && doCmd(10)) || (Misc.is(base, "/tell") && doCmd(19))) {
+		////////////////// msg ///////////////// tell /////////////// msg ////////////////// tell //////////////////
+		if ((Misc.is(base, sl + cmdArray[10]) && cmds.get(cmdArray[10])) || (Misc.is(base, sl + cmdArray[19]) && cmds.get(cmdArray[19]))) {
+			// 10: msg 19: tell
 			if (split.length < 3) {
-				Messaging.send("&cCorrect usage is: /msg [player] [message]");
+				Messaging.send("&cCorrect usage is: " + sl + cmdArray[10] + " [player] [message]");
 				event.setCancelled(true);
 				return;
 			}
@@ -604,14 +590,15 @@ public class iListen extends PlayerListener {
 				Messaging.send("&cCouldn't find player " + split[1]);
 			}
 		}
-
-		if ((Misc.is(base, "/i") && doCmd(7)) || (Misc.is(base, "/give") && doCmd(5)) || (Misc.is(base, "/item") && doCmd(8))) {
-			if (!General.Permissions.getHandler().permission(player, "general.items")) {
+		///////////// i //////////// give //////////// item ///////// i /////////// give ////////// item ///////////
+		if ((Misc.is(base, sl + cmdArray[7]) && cmds.get(cmdArray[7])) || (Misc.is(base, sl + cmdArray[5]) && cmds.get(cmdArray[5])) || (Misc.is(base, sl + cmdArray[8]) && cmds.get(cmdArray[8]))) {
+			//7: i 5: give 8: item
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[8] + "s")) {
 				return;
 			}
 
 			if (split.length < 2) {
-				Messaging.send("&cCorrect usage is: /i [item(:type)|player] [item(:type)|amount] (amount)");
+				Messaging.send(corUse + sl + cmdArray[7] +" [" + cmdArray[8] +"(:type)|player] [" + cmdArray[8] +"(:type)|amount] (amount)");
 				return;
 			}
 
@@ -670,7 +657,7 @@ public class iListen extends PlayerListener {
 			}
 
 			if (itemId == -1 || itemId == 0) {
-				Messaging.send("&cInvalid item.");
+				Messaging.send("&cInvalid " + cmdArray[8] +".");
 				return;
 			}
 
@@ -737,9 +724,10 @@ public class iListen extends PlayerListener {
 
 			event.setCancelled(true);
 		}
-
-		if (Misc.is(base, "/time") && doCmd(20)) {
-			if (!General.Permissions.getHandler().permission(player, "general.time")) {
+		/////////////////////////////// time //////////////////////////// time ///////////////////////////////////
+		if (Misc.is(base, sl + cmdArray[20]) && cmds.get(cmdArray[20])) {
+			//20: time
+			if (!General.Permissions.getHandler().permission(player, pBase + cmdArray[20])) {
 				return;
 			}
 
@@ -754,15 +742,15 @@ public class iListen extends PlayerListener {
 			} else if (split.length == 2) {
 				String command = split[1];
 				if (Misc.is(command, "help")) {
-					Messaging.send("&c-------- /time help --------");
-					Messaging.send("&c/time &f-&c Shows relative time");
-					Messaging.send("&c/time day &f-&c Turns time to day");
-					Messaging.send("&c/time night &f-&c Turns time to night");
-					Messaging.send("&c/time raw &f-&c Shows raw time");
-					Messaging.send("&c/time =13000 &f-&c Sets raw time");
-					Messaging.send("&c/time +500 &f-&c Adds to raw time");
-					Messaging.send("&c/time -500 &f-&c Subtracts from raw time");
-					Messaging.send("&c/time 12 &f-&c Set relative time");
+					Messaging.send("&c-------- " + sl + cmdArray[20] + " help --------");
+					Messaging.send("&c" + sl + cmdArray[20] + " &f-&c Shows relative " + cmdArray[20]);
+					Messaging.send("&c" + sl + cmdArray[20] + " day &f-&c Turns " + cmdArray[20] + " to day");
+					Messaging.send("&c" + sl + cmdArray[20] + " night &f-&c Turns " + cmdArray[20] + " to night");
+					Messaging.send("&c" + sl + cmdArray[20] + " raw &f-&c Shows raw " + cmdArray[20]);
+					Messaging.send("&c" + sl + cmdArray[20] + " =13000 &f-&c Sets raw " + cmdArray[20]);
+					Messaging.send("&c" + sl + cmdArray[20] + " +500 &f-&c Adds to raw " + cmdArray[20]);
+					Messaging.send("&c" + sl + cmdArray[20] + " -500 &f-&c Subtracts from raw " + cmdArray[20]);
+					Messaging.send("&c/" + sl + cmdArray[20] + " 12 &f-&c Set relative " + cmdArray[20]);
 				} else if (Misc.is(command, "day")) {
 					setTime(timeStart, player);
 				} else if (Misc.is(command, "night")) {
@@ -792,23 +780,24 @@ public class iListen extends PlayerListener {
 					}
 				}
 			} else {
-				Messaging.send("&cCorrect usage is: /time [day|night|raw|([=|+|-]time)] (rawtime)");
-				Messaging.send("&c/time &f-&c Shows relative time");
-				Messaging.send("&c/time day &f-&c Turns time to day");
-				Messaging.send("&c/time night &f-&c Turns time to night");
-				Messaging.send("&c/time raw &f-&c Shows raw time");
-				Messaging.send("&c/time =13000 &f-&c Sets raw time");
-				Messaging.send("&c/time +500 &f-&c Adds to raw time");
-				Messaging.send("&c/time -500 &f-&c Subtracts from raw time");
-				Messaging.send("&c/time 12 &f-&c Set relative time");
+				Messaging.send(corUse + sl + cmdArray[20] + " [day|night|raw|([=|+|-]" + cmdArray[20] + ")] (raw" + cmdArray[20] + ")");
+				Messaging.send("&c" + sl + cmdArray[20] + " &f-&c Shows relative " + cmdArray[20]);
+				Messaging.send("&c" + sl + cmdArray[20] + " day &f-&c Turns " + cmdArray[20] + " to day");
+				Messaging.send("&c" + sl + cmdArray[20] + " night &f-&c Turns " + cmdArray[20] + " to night");
+				Messaging.send("&c" + sl + cmdArray[20] + " raw &f-&c Shows raw " + cmdArray[20]);
+				Messaging.send("&c" + sl + cmdArray[20] + " =13000 &f-&c Sets raw " + cmdArray[20]);
+				Messaging.send("&c" + sl + cmdArray[20] + " +500 &f-&c Adds to raw " + cmdArray[20]);
+				Messaging.send("&c" + sl + cmdArray[20] + " -500 &f-&c Subtracts from raw " + cmdArray[20]);
+				Messaging.send("&c/" + sl + cmdArray[20] + " 12 &f-&c Set relative " + cmdArray[20]);
 			}
 
 			return;
 		}
-
-		if ((Misc.is(base, "/playerlist") && doCmd(12)) || (Misc.is(base, "/online") && doCmd(11)) || (Misc.is(base, "/who") && doCmd(23))) {
+		///////////// playerlist ////////////////// online ///////////// who ///////// playerlist //////// online ///////// who ////////
+		if ((Misc.is(base, sl + cmdArray[12]) && cmds.get(cmdArray[12])) || (Misc.is(base, sl + cmdArray[11]) && cmds.get(cmdArray[11])) || (Misc.is(base, sl + cmdArray[23]) && cmds.get(cmdArray[23]))) {
+			//12: playerlist 11: online 23: who
 			if (split.length == 2) {
-				if (!General.Permissions.getHandler().permission(player, "general.player-info")) {
+				if (!General.Permissions.getHandler().permission(player, pBase + "player-info")) {
 					return;
 				}
 

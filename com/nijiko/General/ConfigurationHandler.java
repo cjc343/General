@@ -23,10 +23,8 @@ public class ConfigurationHandler extends DefaultConfiguration {
 				this.commands = config.getBoolean("help.inject-commands", this.commands);
 		} catch (NullPointerException npe) {
 			ConfigurationNode newConf = Configuration.getEmptyNode();
-			//config.setProperty("playerlist", " ");
 			newConf.setProperty("playerlist.show-health", true);
 			newConf.setProperty("playerlist.show-coords", true);
-			//config.setProperty("help", " ");
 			newConf.setProperty("help.inject-commands", true);
 		}
 	}

@@ -46,7 +46,7 @@ public class General extends JavaPlugin {
 	 * Central Data pertaining directly to the plugin name & versioning.
 	 */
 	public static String name = "General";
-	public static String codename = "TheBeginningOfTheEnd";
+	public static String codename = "Chernobyl";
 	public static String version; // set in onEnable now >.<
 
 	/**
@@ -72,7 +72,8 @@ public class General extends JavaPlugin {
 	private DefaultConfiguration config;
 	public static File Motd;
 	public static Permissions Permissions = null;
-
+	
+    public static iConomy iConomy;
 	/*
 	 * Variables
 	 */
@@ -84,6 +85,7 @@ public class General extends JavaPlugin {
 	}
 
 	public void onEnable() {
+
 		version = this.getDescription().getVersion();
 
 		this.getDataFolder().mkdirs();
@@ -184,7 +186,7 @@ public class General extends JavaPlugin {
 		try {
 			mappedItems = Items.returnMap();
 		} catch (Exception ex) {
-			System.out.println(Messaging.bracketize(name + " Flatfile") + " could not open items.db!");
+			log.warning(Messaging.bracketize(name + " Flatfile") + " could not open items.db!");
 		}
 
 		if (mappedItems != null) {
@@ -228,8 +230,6 @@ public class General extends JavaPlugin {
 		}
 	}
 	
-	
-    public static iConomy iConomy;
 	
 	public void setupiConomy() {
 		Plugin test = this.getServer().getPluginManager().getPlugin("iConomy");
