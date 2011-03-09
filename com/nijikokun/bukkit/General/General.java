@@ -49,10 +49,12 @@ public class General extends JavaPlugin {
 	public static String codename = "Chernobyl";
 	public static String version; // set in onEnable now >.<
 
+	final String pBase = "general.";
 	/**
 	 * Listener for the plugin system.
 	 */
 	public iListen l = new iListen(this);
+	public CommandChecker cc = new CommandChecker(this);
 
 	/**
 	 * Things the controller needs to watch permissions for
@@ -77,7 +79,8 @@ public class General extends JavaPlugin {
 	/*
 	 * Variables
 	 */
-	public static String directory = "General" + File.separator, spawn = "";
+    //nothing explicitly errors when this line is commented out....... leaving commented for now.... If I forget and something breaks, it'll show up in a git commit somewhere.
+	//public static String directory = "General" + File.separator, spawn = "";
 	public static HashMap<String, String> items;
 	public static boolean health = true, coords = true, commands = true;
 
@@ -106,7 +109,7 @@ public class General extends JavaPlugin {
 		log.info(Messaging.bracketize(name) + " version " + Messaging.bracketize(version) + " (" + codename + ") loaded");
 
 		// //////////////////////////////////////////
-		Motd = new File(getDataFolder() + File.separator + "general.motd");
+		Motd = new File(getDataFolder() + File.separator + pBase + "motd");
 		Items = new iProperty("items.db");
 
 		try {
@@ -125,11 +128,12 @@ public class General extends JavaPlugin {
 	private void registerEvents() {
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_COMMAND_PREPROCESS, l, Priority.Normal, this);
 		getServer().getPluginManager().registerEvent(Event.Type.PLAYER_JOIN, l, Priority.Normal, this);
+		getServer().getPluginManager().registerEvent(Event.Type.PLUGIN_ENABLE, cc, Priority.Normal, this);
 	}
 
 	public void setupCommands() {
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(getDataFolder() + File.separator + "general.help"));
+			BufferedReader in = new BufferedReader(new FileReader(getDataFolder() + File.separator + pBase + "help"));
 			String str;
 
 			while ((str = in.readLine()) != null) {
