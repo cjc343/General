@@ -833,6 +833,10 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			if (split.length == 2) {
 				Player lookup = Misc.playerMatch(split[1]);
+				if (lookup == null) {
+					Messaging.send("Player &c" + split[1] + " &fis not online!");
+					return;
+				}
 				String name = lookup.getName();
 				String displayName = lookup.getDisplayName();
 				String bar = "";
