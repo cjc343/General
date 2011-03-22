@@ -119,7 +119,7 @@ public class General extends JavaPlugin {
 
 		// Setup
 		setupCommands();
-		setupPermissions();
+//		setupPermissions();
 		setupiConomy();
 		setupItems();
 		l.setupCmds();
@@ -163,21 +163,21 @@ public class General extends JavaPlugin {
 	}
 
 		
-	//(one line of, didn't outright paste this time :P) new setupPermissions courtesy of Acru
-	//http://forums.bukkit.org/posts/79813/
-	public void setupPermissions() {
-		Plugin test = this.getServer().getPluginManager().getPlugin("Permissions");
-
-		if (General.Permissions == null) {
-			if (test != null) {
-                this.getServer().getPluginManager().enablePlugin(test); // This line.
-				General.Permissions = (Permissions) test;
-			} else {
-				log.info(Messaging.bracketize(name) + " Permission system not enabled. Disabling plugin.");
-				this.getServer().getPluginManager().disablePlugin(this);
-			}
-		}
-	}
+//	//(one line of, didn't outright paste this time :P) new setupPermissions courtesy of Acru
+//	//http://forums.bukkit.org/posts/79813/
+//	public void setupPermissions() {
+//		Plugin test = this.getServer().getPluginManager().getPlugin("Permissions");
+//
+//		if (General.Permissions == null) {
+//			if (test != null) {
+//                this.getServer().getPluginManager().enablePlugin(test); // This line.
+//				General.Permissions = (Permissions) test;
+//			} else {
+//				log.info(Messaging.bracketize(name) + " Permission system not enabled. Disabling plugin.");
+//				this.getServer().getPluginManager().disablePlugin(this);
+//			}
+//		}
+//	}
 
 
 	/**

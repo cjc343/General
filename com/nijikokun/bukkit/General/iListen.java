@@ -179,6 +179,7 @@ public class iListen extends PlayerListener {
 		Player destination = Misc.playerMatch(to);
 
 		if (who.equalsIgnoreCase("*")) {
+
 			Player[] players = plugin.getServer().getOnlinePlayers();
 
 			for (Player player : players) {
@@ -492,6 +493,9 @@ public class iListen extends PlayerListener {
 					}
 				}
 			} else if (split.length == 3) {
+				if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".to")) {//general.teleport.here
+					return;
+				}
 				String who = split[1];
 				String to = split[2];
 
