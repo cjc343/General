@@ -74,7 +74,6 @@ public class General extends JavaPlugin {
 	private DefaultConfiguration config;
 	public static File Motd;
 	public static Permissions Permissions = null;
-	
     public static iConomy iConomy;
 	/*
 	 * Variables
@@ -88,7 +87,8 @@ public class General extends JavaPlugin {
 	}
 
 	public void onEnable() {
-
+		l.setupCmds();
+		
 		version = this.getDescription().getVersion();
 
 		this.getDataFolder().mkdirs();
@@ -120,9 +120,9 @@ public class General extends JavaPlugin {
 		// Setup
 		setupCommands();
 //		setupPermissions();
-		setupiConomy();
+		setupOtherPlugins();
 		setupItems();
-		l.setupCmds();
+
 	}
 
 	private void registerEvents() {
@@ -234,14 +234,29 @@ public class General extends JavaPlugin {
 		}
 	}
 	
-	
-	public void setupiConomy() {
-		Plugin test = this.getServer().getPluginManager().getPlugin("iConomy");
-		if (General.iConomy == null) {
-			if (test != null) {
-                this.getServer().getPluginManager().enablePlugin(test); // This line.
-				General.iConomy = (iConomy) test;
-			}
-		}
-	}
+    private void setupOtherPlugins() {
+    	//setup permissions and iconomy
+        Plugin plugin = this.getServer().getPluginManager().getPlugin("Permissions");
+        if (General.Permissions == null) {
+            if (plugin != null) {
+                General.Permissions = (Permissions)plugin;
+                System.out.println("[" + General.name + "] hooked into Permissions.");
+            }
+        }
+        Plugin p2 = this.getServer().getPluginManager().getPlugin("iConomy");
+        if (General.iConomy == null) {
+        	if (p2 != null) {
+        		General.iConomy = (iConomy) p2;
+        		System.out.println("[" + General.name + "] hooked into iConomy.");
+        	}
+        }
+        //set up command registry
+        for (Plugin p : getServer().getPluginManager().getPlugins()) {
+        	if (p.isEnabled()) {
+        		if (p != null && !p.getDescription().getName().equalsIgnoreCase(General.name)) {
+        			iListen.checkPluginCommands(p);
+        		}
+        	}
+        }
+    }
 }

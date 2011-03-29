@@ -1,3 +1,5 @@
 name: General
 main: com.nijikokun.cjcfork.bukkit.General.General
-version: 2.2.3
+version: 2.2.4
+depend:
+  - Permissions

@@ -4,22 +4,18 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.logging.Logger;
-import net.minecraft.server.WorldServer;
-//import org.bukkit.World;
-import org.bukkit.event.Event.Type;
-import org.bukkit.event.player.PlayerChatEvent;
-import org.bukkit.event.player.PlayerEvent;
+
+import org.bukkit.command.Command;
+import org.bukkit.command.PluginCommandYamlParser;
+import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerListener;
-//import org.bukkit.event.server.PluginEvent;
-//import org.bukkit.event.server.ServerEvent;
 import org.bukkit.Location;
-//import org.bukkit.command.Command;
-//import org.bukkit.command.PluginCommandYamlParser;
-//import org.bukkit.craftbukkit.CraftWorld;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
@@ -65,7 +61,7 @@ public class iListen extends PlayerListener {
 	public HashMap<Player, String> AFK = new HashMap<Player, String>();
 	public List<String> Commands = new ArrayList<String>();
 	public static General plugin;
-	public WorldServer server;
+	//public WorldServer server;
 
 	//common strings
 	final String sl = "/";
@@ -113,34 +109,22 @@ public class iListen extends PlayerListener {
 			cmds.put(s, true);
 		}
 	}
-//	@Override
-//	public void onPluginEnabled(PluginEvent p) {
-//		
-//	
-//		// input commands into hash table
-//		for (String s : cmdArray) {
-//			cmds.put(s, true);
-//		}
-//		Plugin[] pArray = plugin.getServer().getPluginManager().getPlugins();
-//		for (Plugin p : pArray) {
-//			if (p != null && !p.getDescription().getName().equalsIgnoreCase(General.name)) {
-//				//plugin.getServer().getPluginManager().enablePlugin(p);
-//				if (p.getDescription().getCommands() != null) {
-//					for (Command c : PluginCommandYamlParser.parse(p)) {
-//						if (cmds.containsKey(c.getName())) {
-//							System.out.println(General.name + " is giving " + c.getName() + " to " + p.getDescription().getName());
-//							cmds.put(c.getName(), false);
-//							// compare command to hashtable with commands
-//							// General uses...
-//							// command exists in general. Need to....
-//						}
-//						// System.out.println(c.getName());
-//					}
-//					// System.out.println(p.getDescription().getCommands().toString());
-//				}
-//			}
-//		}
-//	}
+	
+	public static void checkPluginCommands(Plugin p) {
+		if (p.getDescription().getCommands() != null) {
+			for (Command c : PluginCommandYamlParser.parse(p)) {
+				if (iListen.cmds.containsKey(c.getName())) {
+					System.out.println(General.name + " is giving " + c.getName() + " to " + p.getDescription().getName());
+					iListen.cmds.put(c.getName(), false);
+					// compare command to hashtable with commands
+					// General uses...
+					// command exists in general. Need to....
+				}
+				// System.out.println(c.getName());
+			}
+			// System.out.println(p.getDescription().getCommands().toString());
+		}
+	}
 
 	private Location spawn(Player player) {
 		// lol, duh. Courtesy of browsing haruArc's (github commit
@@ -184,7 +168,7 @@ public class iListen extends PlayerListener {
 
 			for (Player player : players) {
 				if (!player.equals(destination)) {
-					player.teleportTo(destination.getLocation());
+					player.teleport(destination.getLocation());
 				}
 			}
 
@@ -199,7 +183,7 @@ public class iListen extends PlayerListener {
 					continue;
 				} else {
 					if (!player.equals(destination)) {
-						player.teleportTo(destination.getLocation());
+						player.teleport(destination.getLocation());
 					}
 				}
 			}
@@ -211,7 +195,7 @@ public class iListen extends PlayerListener {
 			if ((player == null) || (destination == null)) {
 				return false;
 			} else {
-				player.teleportTo(destination.getLocation());
+				player.teleport(destination.getLocation());
 				return true;
 			}
 		}
@@ -375,7 +359,7 @@ public class iListen extends PlayerListener {
 					public void run() {
 						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
 							public void run() {
-								PlayerChatEvent newEvent = new PlayerChatEvent(Type.PLAYER_CHAT, pp, sl + cmdArray[9]);
+								PlayerCommandPreprocessEvent newEvent = new PlayerCommandPreprocessEvent(pp, sl + cmdArray[9]);
 								onPlayerCommandPreprocess(newEvent);
 							}
 						});
@@ -390,7 +374,7 @@ public class iListen extends PlayerListener {
 	}
 
 	@Override
-	public void onPlayerJoin(PlayerEvent event) {
+	public void onPlayerJoin(PlayerJoinEvent event) {
 		if (cmds.get(cmdArray[9])) { // motd
 			sendMotd(event.getPlayer());
 		}
@@ -407,7 +391,7 @@ public class iListen extends PlayerListener {
 	 *         false the command doesn't.
 	 */
 	@Override
-	public void onPlayerCommandPreprocess(PlayerChatEvent event) {
+	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 
 		String[] split = event.getMessage().split(" ");
 		Player player = event.getPlayer();
@@ -462,7 +446,7 @@ public class iListen extends PlayerListener {
 			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[17])) {//general.spawn
 				return;
 			}
-			player.teleportTo(spawn(player));
+			player.teleport(spawn(player));
 			event.setCancelled(true);
 			return;
 		}
@@ -538,7 +522,7 @@ public class iListen extends PlayerListener {
 				}
 
 				log.info(player.getName() + " teleported " + who.getName() + " to their self.");
-				who.teleportTo(player.getLocation());
+				who.teleport(player.getLocation());
 			} else {
 				Messaging.send("&cCan't find user " + split[1] + ".");
 			}
