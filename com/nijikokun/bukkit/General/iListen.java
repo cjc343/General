@@ -120,6 +120,12 @@ public class iListen extends PlayerListener {
 					// General uses...
 					// command exists in general. Need to....
 				}
+				for (String alias : c.getAliases()){
+					if (iListen.cmds.containsKey(alias)) {
+						System.out.println(General.name + " is giving " + alias + " to " + p.getDescription().getName());
+						iListen.cmds.put(alias, false);
+					}
+				}
 				// System.out.println(c.getName());
 			}
 			// System.out.println(p.getDescription().getCommands().toString());
@@ -171,6 +177,7 @@ public class iListen extends PlayerListener {
 					player.teleport(destination.getLocation());
 				}
 			}
+			plugin.getServer().broadcastMessage("Teleporting all players to " + to);
 
 			return true;
 		} else if (who.contains(",")) {
@@ -184,6 +191,8 @@ public class iListen extends PlayerListener {
 				} else {
 					if (!player.equals(destination)) {
 						player.teleport(destination.getLocation());
+						player.sendMessage("Teleporting to " + to);
+						destination.sendMessage("Teleporting " + player.getName() + " to you.");
 					}
 				}
 			}
@@ -196,6 +205,8 @@ public class iListen extends PlayerListener {
 				return false;
 			} else {
 				player.teleport(destination.getLocation());
+				player.sendMessage("Teleporting to " + to);
+				destination.sendMessage("Teleporting " + who + " to you.");
 				return true;
 			}
 		}

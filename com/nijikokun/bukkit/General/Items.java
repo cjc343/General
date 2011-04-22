@@ -258,7 +258,7 @@ public class Items {
 			}
 		}
 
-		if (id == 44 || id == 91 || id == 86 || id == 67 || id == 53 || id == 77 || id == 71 || id == 64) {
+		if (id == 6 || id == 44 || id == 91 || id == 86 || id == 67 || id == 53 || id == 77 || id == 71 || id == 64) {
 			if (type >= 0 && type <= 3) {
 				return true;
 			}
