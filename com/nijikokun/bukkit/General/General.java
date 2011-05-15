@@ -15,7 +15,7 @@ import org.bukkit.plugin.Plugin;
 
 import com.nijikokun.bukkit.Permissions.Permissions;
 
-import com.nijiko.coelho.iConomy.iConomy;
+import com.iConomy.iConomy;
 
 import com.nijiko.cjcfork.General.ConfigurationHandler;
 import com.nijiko.cjcfork.General.DefaultConfiguration;

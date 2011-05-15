@@ -20,9 +20,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 
-import com.nijiko.coelho.iConomy.iConomy;
-import com.nijiko.coelho.iConomy.system.Account;
-
+import com.iConomy.iConomy;
 /**
  * General 1.1 & Code from iConomy 2.x
  * Coded while listening to Avenged Sevenfold - A little piece of heaven <3
@@ -61,15 +59,15 @@ public class iListen extends PlayerListener {
 	public HashMap<Player, String> AFK = new HashMap<Player, String>();
 	public List<String> Commands = new ArrayList<String>();
 	public static General plugin;
-	//public WorldServer server;
+	// public WorldServer server;
 
-	//common strings
+	// common strings
 	final String sl = "/";
 
 	final String corUse = "&cCorrect usage is: ";
 	final String incUse = "&cIncorrect usage of ";
 	// all commands checked for by general.
-	
+
 	public String[] cmdArray = { "afk", "away", "compass", "getpos", "ghelp", "give", "help", "i", "item", "motd", "msg", "online", "playerlist", "reloaditems", "rlidb", "s", "setspawn", "spawn", "teleport", "tell", "time", "tp", "tphere", "who" };
 
 	// 0 afk
@@ -103,13 +101,12 @@ public class iListen extends PlayerListener {
 		plugin = instance;
 	}
 
-	
 	public void setupCmds() {
 		for (String s : cmdArray) {
 			cmds.put(s, true);
 		}
 	}
-	
+
 	public static void checkPluginCommands(Plugin p) {
 		if (p.getDescription().getCommands() != null) {
 			for (Command c : PluginCommandYamlParser.parse(p)) {
@@ -120,7 +117,7 @@ public class iListen extends PlayerListener {
 					// General uses...
 					// command exists in general. Need to....
 				}
-				for (String alias : c.getAliases()){
+				for (String alias : c.getAliases()) {
 					if (iListen.cmds.containsKey(alias)) {
 						System.out.println(General.name + " is giving " + alias + " to " + p.getDescription().getName());
 						iListen.cmds.put(alias, false);
@@ -191,8 +188,7 @@ public class iListen extends PlayerListener {
 				} else {
 					if (!player.equals(destination)) {
 						player.teleport(destination.getLocation());
-						player.sendMessage("Teleporting to " + to);
-						destination.sendMessage("Teleporting " + player.getName() + " to you.");
+						printTele(player, destination);
 					}
 				}
 			}
@@ -205,10 +201,16 @@ public class iListen extends PlayerListener {
 				return false;
 			} else {
 				player.teleport(destination.getLocation());
-				player.sendMessage("Teleporting to " + to);
-				destination.sendMessage("Teleporting " + who + " to you.");
+				printTele(player, destination);
 				return true;
 			}
+		}
+	}
+	
+	private void printTele(Player player, Player destination) {
+		if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".silent")) {
+			player.sendMessage("Teleporting to " + destination.getName());
+			destination.sendMessage("Teleporting " + player.getName() + " to you.");
 		}
 	}
 
@@ -344,7 +346,7 @@ public class iListen extends PlayerListener {
 			// General.log.info("Help command registry does not contain "+command_line+" to remove!");
 		}
 	}
-	
+
 	private void sendMotd(Player player) {
 		String[] motd = readMotd();
 
@@ -358,25 +360,25 @@ public class iListen extends PlayerListener {
 
 		Plugin test = plugin.getServer().getPluginManager().getPlugin("iConomy");
 		if (test != null) {
-			Account pAct = iConomy.getBank().getAccount(player.getName());
-			if (pAct != null) {
-				balance = pAct + " " + iConomy.getBank().getCurrency();
+		//	Account pAct = iConomy.getAccount(player.getName());
+			//if (pAct != null) {
+				balance = iConomy.format(player.getName());
 				for (String line : motd) {
 					Messaging.send(player, Messaging.argument(line, new String[] { "+dname,+d", "+name,+n", "+location,+l", "+health,+h", "+ip", "+balance", "+online" }, new String[] { player.getDisplayName(), player.getName(), location, Misc.string(player.getHealth()), ip, balance, Misc.string(plugin.getServer().getOnlinePlayers().length) }));
 				}
-			} else {
-				final Player pp = player;
-				plugin.getServer().getScheduler().scheduleAsyncDelayedTask(plugin, new Runnable() {
-					public void run() {
-						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
-							public void run() {
-								PlayerCommandPreprocessEvent newEvent = new PlayerCommandPreprocessEvent(pp, sl + cmdArray[9]);
-								onPlayerCommandPreprocess(newEvent);
-							}
-						});
-					}
-				}, 10);
-			}
+			//} else {
+//				final Player pp = player;
+//				plugin.getServer().getScheduler().scheduleAsyncDelayedTask(plugin, new Runnable() {
+//					public void run() {
+//						plugin.getServer().getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+//							public void run() {
+//								PlayerCommandPreprocessEvent newEvent = new PlayerCommandPreprocessEvent(pp, sl + cmdArray[9]);
+//								onPlayerCommandPreprocess(newEvent);
+//							}
+//						});
+//					}
+//				}, 10);
+			//}
 		} else {
 			for (String line : motd) {
 				Messaging.send(player, Messaging.argument(line, new String[] { "+dname,+d", "+name,+n", "+location,+l", "+health,+h", "+ip", "+balance", "+online" }, new String[] { player.getDisplayName(), player.getName(), location, Misc.string(player.getHealth()), ip, balance, Misc.string(plugin.getServer().getOnlinePlayers().length) }));
@@ -398,19 +400,18 @@ public class iListen extends PlayerListener {
 	 *            The player who sent the command.
 	 * @param split
 	 *            The input line split by spaces.
-	 * @return <code>boolean</code> - True denotes that the command existed,
-	 *         false the command doesn't.
+	 * @return <code>boolean</code> - True denotes that the command existed, false the command doesn't.
 	 */
 	@Override
 	public void onPlayerCommandPreprocess(PlayerCommandPreprocessEvent event) {
 
 		String[] split = event.getMessage().split(" ");
 		Player player = event.getPlayer();
-		//World world = player.getWorld();
-		//server = ((CraftWorld) world).getHandle();
+		// World world = player.getWorld();
+		// server = ((CraftWorld) world).getHandle();
 		Messaging.save(player);
 		String base = split[0];
-		////// help ////////////// help /////////// ? ////////// ? /////////// ghelp ///////////// ghelp //////////////
+		// //// help ////////////// help /////////// ? ////////// ? /////////// ghelp ///////////// ghelp //////////////
 		if ((!event.isCancelled()) && (Misc.isEither(base, sl + cmdArray[6], sl + "?") && cmds.get(cmdArray[6])) || (Misc.is(base, sl + cmdArray[4])) && cmds.get(cmdArray[4])) {
 			// 6: help 4: ghelp
 			int page = 0;
@@ -429,10 +430,10 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		/////////////////// setspawn //////////////////////////////// setspawn
+		// ///////////////// setspawn //////////////////////////////// setspawn
 		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[16]) && cmds.get(cmdArray[16])) {
-			//16: setspawn
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[17] + ".set")) {//general.spawn.set
+			// 16: setspawn
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[17] + ".set")) {// general.spawn.set
 				return;
 			}
 			player.getWorld().setSpawnLocation(player.getLocation().getBlockX(), player.getLocation().getBlockY(), player.getLocation().getBlockZ());
@@ -440,10 +441,10 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		/////////////////////// reloaditems ///////////////////////// reloaditems
-		if (Misc.isEither(base, sl+ "rlidb", sl+cmdArray[13]) && cmds.get(cmdArray[13])) {
-			//13: reloaditems
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[13])) {//general.reloaditems
+		// ///////////////////// reloaditems ///////////////////////// reloaditems
+		if (Misc.isEither(base, sl + "rlidb", sl + cmdArray[13]) && cmds.get(cmdArray[13])) {
+			// 13: reloaditems
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[13])) {// general.reloaditems
 				return;
 			}
 			plugin.setupItems();
@@ -451,27 +452,27 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		/////////////////////////// spawn //////////////////////////// spawn //////////////
+		// ///////////////////////// spawn //////////////////////////// spawn //////////////
 		if (Misc.is(base, sl + cmdArray[17]) && cmds.get(cmdArray[17])) {
-			//17: spawn
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[17])) {//general.spawn
+			// 17: spawn
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[17])) {// general.spawn
 				return;
 			}
 			player.teleport(spawn(player));
 			event.setCancelled(true);
 			return;
 		}
-		///////////////////// motd //////////////////////// motd //////////////////
+		// /////////////////// motd //////////////////////// motd //////////////////
 		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[9]) && cmds.get(cmdArray[9])) {
-			//9: motd
+			// 9: motd
 			sendMotd(player);
 			event.setCancelled(true);
 			return;
 		}
-		///////////// tp /////////////// teleport ////////////// tp ///////////////// teleport //////////////
-		if ((Misc.is(base, sl+ cmdArray[21]) && cmds.get(cmdArray[21])) || (Misc.is(base, sl+ cmdArray[18]) && cmds.get(cmdArray[18]))) {
+		// /////////// tp /////////////// teleport ////////////// tp ///////////////// teleport //////////////
+		if ((Misc.is(base, sl + cmdArray[21]) && cmds.get(cmdArray[21])) || (Misc.is(base, sl + cmdArray[18]) && cmds.get(cmdArray[18]))) {
 			// 21: tp 18: teleport
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18])) {//general.teleport
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18])) {// general.teleport
 				return;
 			}
 			event.setCancelled(true);
@@ -488,7 +489,7 @@ public class iListen extends PlayerListener {
 					}
 				}
 			} else if (split.length == 3) {
-				if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".to")) {//general.teleport.here
+				if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".to")) {// general.teleport.here
 					return;
 				}
 				String who = split[1];
@@ -512,10 +513,10 @@ public class iListen extends PlayerListener {
 			}
 			return;
 		}
-		////////// s /////////// tphere ////////////// s //////////////// tphere //////////////////
+		// //////// s /////////// tphere ////////////// s //////////////// tphere //////////////////
 		if ((Misc.is(base, sl + cmdArray[15]) && cmds.get(cmdArray[15])) || (Misc.is(base, sl + cmdArray[22]) && cmds.get(cmdArray[22]))) {
-			//15: s 22: tphere
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".here")) { //general.teleport.here
+			// 15: s 22: tphere
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[18] + ".here")) { // general.teleport.here
 				return;
 			}
 			event.setCancelled(true);
@@ -539,9 +540,9 @@ public class iListen extends PlayerListener {
 			}
 			return;
 		}
-		//////////////// getpos //////////////////////// getpos /////////////////////
+		// ////////////// getpos //////////////////////// getpos /////////////////////
 		if ((!event.isCancelled()) && Misc.is(base, sl + cmdArray[3]) && cmds.get(cmdArray[3])) {
-			//3: getpos
+			// 3: getpos
 			Messaging.send("Pos X: " + player.getLocation().getX() + " Y: " + player.getLocation().getY() + " Z: " + player.getLocation().getZ());
 			Messaging.send("Rotation: " + player.getLocation().getYaw() + " Pitch: " + player.getLocation().getPitch());
 
@@ -555,9 +556,9 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		////////////////// compass ////////////// compass ////////////
+		// //////////////// compass ////////////// compass ////////////
 		if (Misc.is(base, sl + cmdArray[2]) && cmds.get(cmdArray[2])) {
-			//2: compass
+			// 2: compass
 			double degreeRotation = ((player.getLocation().getYaw() - 90) % 360);
 
 			if (degreeRotation < 0) {
@@ -568,9 +569,9 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		/////////////// afk ////////////// away ////////////// afk ///////////////// away ///////////////
+		// ///////////// afk ////////////// away ////////////// afk ///////////////// away ///////////////
 		if ((Misc.is(base, sl + cmdArray[0]) && cmds.get(cmdArray[0])) || (Misc.is(base, sl + cmdArray[1]) && cmds.get(cmdArray[1]))) {
-			//0: afk 1: away
+			// 0: afk 1: away
 			if ((AFK != null || !AFK.isEmpty()) && isAFK(player)) {
 				Messaging.send("&7You have been marked as back.");
 				unAFK(player);
@@ -587,7 +588,7 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		////////////////// msg ///////////////// tell /////////////// msg ////////////////// tell //////////////////
+		// //////////////// msg ///////////////// tell /////////////// msg ////////////////// tell //////////////////
 		if ((Misc.is(base, sl + cmdArray[10]) && cmds.get(cmdArray[10])) || (Misc.is(base, sl + cmdArray[19]) && cmds.get(cmdArray[19]))) {
 			// 10: msg 19: tell
 			event.setCancelled(true);
@@ -616,16 +617,16 @@ public class iListen extends PlayerListener {
 			}
 			return;
 		}
-		///////////// i //////////// give //////////// item ///////// i /////////// give ////////// item ///////////
+		// /////////// i //////////// give //////////// item ///////// i /////////// give ////////// item ///////////
 		if ((Misc.is(base, sl + cmdArray[7]) && cmds.get(cmdArray[7])) || (Misc.is(base, sl + cmdArray[5]) && cmds.get(cmdArray[5])) || (Misc.is(base, sl + cmdArray[8]) && cmds.get(cmdArray[8]))) {
-			//7: i 5: give 8: item
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[8] + "s")) { //general.items
+			// 7: i 5: give 8: item
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[8] + "s")) { // general.items
 				return;
 			}
 			event.setCancelled(true);
 			if (split.length < 2) {
-				Messaging.send(corUse + sl + cmdArray[7] +" [" + cmdArray[8] +"(:type)|player] [" + cmdArray[8] +"(:type)|amount] (amount)");
-			
+				Messaging.send(corUse + sl + cmdArray[7] + " [" + cmdArray[8] + "(:type)|player] [" + cmdArray[8] + "(:type)|amount] (amount)");
+
 				return;
 			}
 
@@ -684,7 +685,7 @@ public class iListen extends PlayerListener {
 			}
 
 			if (itemId == -1 || itemId == 0) {
-				Messaging.send("&cInvalid " + cmdArray[8] +".");
+				Messaging.send("&cInvalid " + cmdArray[8] + ".");
 				return;
 			}
 
@@ -750,10 +751,10 @@ public class iListen extends PlayerListener {
 			}
 			return;
 		}
-		/////////////////////////////// time //////////////////////////// time ///////////////////////////////////
+		// ///////////////////////////// time //////////////////////////// time ///////////////////////////////////
 		if (Misc.is(base, sl + cmdArray[20]) && cmds.get(cmdArray[20])) {
-			//20: time
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[20])) { //general.time
+			// 20: time
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + cmdArray[20])) { // general.time
 				return;
 			}
 
@@ -819,10 +820,10 @@ public class iListen extends PlayerListener {
 			event.setCancelled(true);
 			return;
 		}
-		///////////// playerlist ////////////////// online ///////////// who ///////// playerlist //////// online ///////// who ////////
+		// /////////// playerlist ////////////////// online ///////////// who ///////// playerlist //////// online ///////// who ////////
 		if ((Misc.is(base, sl + cmdArray[12]) && cmds.get(cmdArray[12])) || (Misc.is(base, sl + cmdArray[11]) && cmds.get(cmdArray[11])) || (Misc.is(base, sl + cmdArray[23]) && cmds.get(cmdArray[23]))) {
-			//12: playerlist 11: online 23: who
-			if (!General.Permissions.getHandler().permission(player, plugin.pBase + "player-info")) { //general.player-info
+			// 12: playerlist 11: online 23: who
+			if (!General.Permissions.getHandler().permission(player, plugin.pBase + "player-info")) { // general.player-info
 				return;
 			}
 			event.setCancelled(true);
