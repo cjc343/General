@@ -4,7 +4,7 @@ import org.bukkit.event.server.PluginEnableEvent;
 import org.bukkit.event.server.ServerListener;
 import org.bukkit.plugin.Plugin;
 
-import com.nijiko.coelho.iConomy.iConomy;
+import com.iConomy.iConomy;
 import com.nijikokun.bukkit.Permissions.Permissions;
 
 public class CommandChecker extends ServerListener {

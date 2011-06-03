@@ -110,17 +110,17 @@ public class iListen extends PlayerListener {
 	public static void checkPluginCommands(Plugin p) {
 		if (p.getDescription().getCommands() != null) {
 			for (Command c : PluginCommandYamlParser.parse(p)) {
-				if (iListen.cmds.containsKey(c.getName())) {
+				if (iListen.cmds.containsKey(c.getName().toLowerCase())) {
 					System.out.println(General.name + " is giving " + c.getName() + " to " + p.getDescription().getName());
-					iListen.cmds.put(c.getName(), false);
+					iListen.cmds.put(c.getName().toLowerCase(), false);
 					// compare command to hashtable with commands
 					// General uses...
 					// command exists in general. Need to....
 				}
 				for (String alias : c.getAliases()) {
-					if (iListen.cmds.containsKey(alias)) {
+					if (iListen.cmds.containsKey(alias.toLowerCase())) {
 						System.out.println(General.name + " is giving " + alias + " to " + p.getDescription().getName());
-						iListen.cmds.put(alias, false);
+						iListen.cmds.put(alias.toLowerCase(), false);
 					}
 				}
 				// System.out.println(c.getName());

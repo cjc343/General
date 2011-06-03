@@ -245,6 +245,12 @@ public class Items {
 		if (type == -1 || type == 0) {
 			return true;
 		}
+		
+		if (id == 358) {
+			if (type >=0 && type <= 65536) {
+				return true;
+			}
+		}
 
 		if (id == 35 || id == 351 || id == 63) {
 			if (type >= 0 && type <= 15) {
@@ -252,7 +258,7 @@ public class Items {
 			}
 		}
 
-		if (id == 17) {
+		if (id == 17 || id == 31) {
 			if (type >= 0 && type <= 2) {
 				return true;
 			}
